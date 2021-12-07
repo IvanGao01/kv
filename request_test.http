@@ -1,0 +1,23 @@
+### Send POST request with body as parameters
+POST http://localhost:3700/set
+Content-Type: application/x-www-form-urlencoded
+
+id=12
+
+### Send POST request with body as parameters
+POST http://localhost:3700/set
+Content-Type: application/x-www-form-urlencoded
+
+name=zhangsan
+
+### Send POST request with body as parameters
+POST http://localhost:3700/set
+Content-Type: application/x-www-form-urlencoded
+
+class=15
+
+### Send POST request with body as parameters
+POST http://localhost:3700/get
+Content-Type: application/x-www-form-urlencoded
+
+class
