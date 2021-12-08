@@ -17,9 +17,7 @@ type DBFile struct {
 	mutex sync.RWMutex
 }
 
-// 每个文件最大8589934592
-// | header | entries |
-// | uint32 | Entry
+
 func (f *DBFile) Write(b []byte) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
@@ -29,11 +27,12 @@ func (f *DBFile) Write(b []byte) {
 	} else {
 		offset = info.Size()
 	}
-	var size uint16 = uint16(len(b))
-	f.File.WriteAt(Uint16ToBytes(size), offset)
-	offset += 2
+	var size = uint16(len(b))
 	f.File.WriteAt(b, offset)
 	offset += int64(size)
+	f.File.WriteAt(Uint16ToBytes(size), offset)
+	offset += 2
+
 	f.File.Sync()
 }
 
@@ -41,14 +40,21 @@ func (f *DBFile) Read(b []byte) []byte {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 	var offset int64
+	if info, err := f.File.Stat(); err != nil {
+		panic(err)
+	}else {
+		offset = info.Size()
+	}
 	for {
-		var sizeb []byte = make([]byte, 2)
+		if offset <= 0 {
+			return nil
+		}
+		offset -= 2
+		var sizeb  = make([]byte, 2)
 		f.File.ReadAt(sizeb, offset)
-		offset += 2
-		var datab []byte = make([]byte, BytesToUint16(sizeb))
-
+		offset -= int64(BytesToUint16(sizeb)) //返回到数据的读取位置
+		var datab  = make([]byte, BytesToUint16(sizeb))
 		f.File.ReadAt(datab, offset)
-		offset += int64(BytesToUint16(sizeb))
 		if bytes.Compare(bytes.Split(datab, []byte("="))[0], b) == 0 {
 			return datab
 		}
@@ -74,8 +80,7 @@ func openActiveFile(path string) *os.File {
 	return file
 }
 
-// Active File by active.data
-// if return nil
+
 func getActiveFile(path string) (*os.File, error) {
 	var fName string
 	filepath.Walk(path, func(path string, info fs.FileInfo, err error) error {
@@ -89,8 +94,7 @@ func getActiveFile(path string) (*os.File, error) {
 	return file, err
 }
 
-// | size | key | value |
-// | int16 |   by size    |
+
 type Entry struct {
 	size  uint16
 	key   string
