@@ -1,8 +1,11 @@
 package set
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/spf13/cobra"
+	"net/http"
+	"strings"
 )
 
 var SetCmd = &cobra.Command{
@@ -12,11 +15,27 @@ var SetCmd = &cobra.Command{
 }
 
 func setRun(cmd *cobra.Command, args []string) {
-	if len(args) != 2 {
+	if len(args) != 1 {
 		fmt.Println("Please enter the correct parameters. ")
 		return
 	}
+	if len(strings.Split(args[0],"=")) != 2 {
+		fmt.Println("Please enter the correct parameters. ")
+	}
+	request, err := http.NewRequest(http.MethodPost, "http://127.0.0.1:3700/set", bytes.NewReader([]byte(args[0])))
+	if err != nil {
+		fmt.Println(err)
+	}
+	client := http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if response.StatusCode == http.StatusOK {
+		fmt.Println("Write successfully! ")
+	}
 
-	//TODO write key value to _tool.tmp
+
+
 
 }

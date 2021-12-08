@@ -1,8 +1,11 @@
 package get
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/spf13/cobra"
+	"net/http"
+	"strings"
 )
 
 var GetCmd = &cobra.Command{
@@ -13,7 +16,24 @@ var GetCmd = &cobra.Command{
 
 func getRun(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		fmt.Errorf("Error: Please enter the correct format. ")
+		panic("Error: Please enter the correct format. ")
 	}
-	//TODO get the value by key with _tool.tmp
+
+	if strings.Contains(args[0], "=") {
+		panic("Error: Please enter the correct format. ")
+	}
+
+	request, err := http.NewRequest(http.MethodPost, "http://127.0.0.1:3700/get", bytes.NewReader([]byte(args[0])))
+	if err != nil {
+		panic(err)
+	}
+	client := http.Client{}
+	if err != nil {
+		panic(err)
+	}
+	response, err := client.Do(request)
+	var result []byte = make([]byte, 10)
+	response.Body.Read(result)
+	fmt.Println(string(result))
+
 }

@@ -54,27 +54,9 @@ func (f *DBFile) Read(b []byte) []byte {
 		}
 
 	}
-	// 4 + 2
-	// size
 
 }
 
-// 获取ActiveFIle的Offset
-//func (f *DBFile) offset(){
-//	if f.Offset != 0 {
-//		return
-//	}
-//	var b []byte = make([]byte, 4, 4)
-//	f.File.ReadAt(b, 0)
-//	if BytesToUint32(b) == 0 {
-//		_, err := f.File.WriteAt([]byte{0,0,0,4}, 0)
-//		if err != nil {
-//			fmt.Println(err)
-//		}
-//		f.File.Sync()
-//	}
-//	f.Offset = BytesToUint32(b)
-//}
 
 func GetActiveFile(path string) *DBFile {
 	var dbFile DBFile

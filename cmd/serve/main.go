@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"github.com/ivangao01/kv/storage"
 	"io/ioutil"
 	"net/http"
@@ -39,9 +40,7 @@ func Open() {
 func Get(writer http.ResponseWriter, request *http.Request) {
 	b, _ := ioutil.ReadAll(request.Body)
 	kvb := serve.activeFile.Read(b)
-	writer.Write(kvb)
-
-
+	writer.Write(bytes.Split(kvb, []byte("="))[1])
 }
 
 func Set(writer http.ResponseWriter, request *http.Request) {
@@ -49,6 +48,6 @@ func Set(writer http.ResponseWriter, request *http.Request) {
 	keyval := strings.Split(string(b), "=")
 	if len(keyval) == 2 { //符合格式，可以写入
 		serve.activeFile.Write(b)
+		writer.WriteHeader(http.StatusOK)
 	}
-
 }

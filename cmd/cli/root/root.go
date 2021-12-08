@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	Address        = "http://127.0.0.1:3700"
+)
+
 var Run = func(cmd *cobra.Command, args []string) {}
 
 func init() {
