@@ -6,17 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	Address        = "http://127.0.0.1:3700"
-)
-
-var Run = func(cmd *cobra.Command, args []string) {}
-
-func init() {
-	rootCmd.AddCommand(set.SetCmd)
-	rootCmd.AddCommand(get.GetCmd)
-}
-
 var rootCmd = &cobra.Command{
 	Use:  "tool",
 	Long: "tool set <key value> | get <key>",
@@ -27,10 +16,8 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func AddCommand(cmd *cobra.Command) {
-	rootCmd.AddCommand(cmd)
-}
-
 func Execute() error {
+	rootCmd.AddCommand(set.Cmd)
+	rootCmd.AddCommand(get.Cmd)
 	return rootCmd.Execute()
 }

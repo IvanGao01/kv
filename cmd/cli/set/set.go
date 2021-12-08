@@ -8,9 +8,9 @@ import (
 	"strings"
 )
 
-var SetCmd = &cobra.Command{
-	Short: "set key value",
-	Use:   "set <key value>",
+var Cmd = &cobra.Command{
+	Short: "set key=value",
+	Use:   "set key=value",
 	Run:   setRun,
 }
 
@@ -19,7 +19,7 @@ func setRun(cmd *cobra.Command, args []string) {
 		fmt.Println("Please enter the correct parameters. ")
 		return
 	}
-	if len(strings.Split(args[0],"=")) != 2 {
+	if len(strings.Split(args[0], "=")) != 2 {
 		fmt.Println("Please enter the correct parameters. ")
 	}
 	request, err := http.NewRequest(http.MethodPost, "http://127.0.0.1:3700/set", bytes.NewReader([]byte(args[0])))
@@ -31,11 +31,11 @@ func setRun(cmd *cobra.Command, args []string) {
 	if err != nil {
 		fmt.Println(err)
 	}
+	if response.StatusCode == http.StatusBadRequest {
+		fmt.Println("Write failed! ")
+	}
 	if response.StatusCode == http.StatusOK {
 		fmt.Println("Write successfully! ")
 	}
-
-
-
 
 }

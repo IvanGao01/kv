@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/spf13/cobra"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
 
-var GetCmd = &cobra.Command{
+var Cmd = &cobra.Command{
 	Short: "get key",
 	Use:   "get key",
 	Run:   getRun,
@@ -32,8 +33,16 @@ func getRun(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 	response, err := client.Do(request)
-	var result []byte = make([]byte, 10)
-	response.Body.Read(result)
-	fmt.Println(string(result))
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+
+	res, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+	fmt.Println(string(res))
 
 }
