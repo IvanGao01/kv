@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-const KEY_LENGTH int64 = 2
+const FOOTER_SIZE int64 = 4
 
 type DBFile struct {
 	Path  string
@@ -20,7 +20,11 @@ type DBFile struct {
 	mutex sync.RWMutex
 }
 
-func (f *DBFile) Write(entry []byte) error {
+func (f *DBFile) Close() error {
+	return f.File.Close()
+}
+
+func (f *DBFile) AppendEntry(entry *Entry) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 	var offset int64
@@ -29,23 +33,16 @@ func (f *DBFile) Write(entry []byte) error {
 	} else {
 		offset = info.Size()
 	}
-	var size = uint16(len(entry))
-	_, err := f.File.WriteAt(entry, offset)
-	if err != nil {
-		return err
-	}
-	offset += int64(size)
-	_, err = f.File.WriteAt(Uint16ToBytes(size), offset)
-	if err != nil {
-		return err
-	}
-	offset += KEY_LENGTH
 
-	f.File.Sync()
-	return nil
+	_, err := f.File.WriteAt(entry.Marshal(), offset)
+	if err != nil {
+		return err
+	}
+
+	return f.File.Sync()
 }
 
-func (f *DBFile) Read(key []byte) []byte {
+func (f *DBFile) Scan(key []byte) []byte {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 	var offset int64
@@ -55,21 +52,23 @@ func (f *DBFile) Read(key []byte) []byte {
 		offset = info.Size()
 	}
 	for {
-		if offset <= KEY_LENGTH {
+		if offset <= FOOTER_SIZE {
 			return nil
 		}
-		offset -= KEY_LENGTH
-		size := int64(readInt16(f.File, offset))
-		offset -= size
-		data := readBytes(f.File, offset, size)
-		sepIdx := bytes.IndexByte(data, '=')
-		if sepIdx > 0 {
-			if bytes.Compare(data[:sepIdx], key) == 0 {
-				return data[sepIdx+1:]
-			}
+
+		// |  n    |  n      |  2 bytes   | 2 bytes     |
+		// |  key  |  value  |  key size  | value size  |
+		offset -= 2
+		valueSize := readInt16(f.File, offset)
+		offset -= 2
+		keySize := readInt16(f.File, offset)
+
+		offset -= int64(valueSize + keySize)
+		curKey := readBytes(f.File, offset, int64(keySize))
+		if bytes.Compare(curKey, key) == 0 {
+			return readBytes(f.File, offset+int64(keySize), int64(valueSize))
 		}
 	}
-
 }
 
 func GetActiveFile(path string) *DBFile {
@@ -102,9 +101,44 @@ func getActiveFile(path string) (*os.File, error) {
 }
 
 type Entry struct {
-	size  uint16
-	key   string
-	value string
+	key   []byte
+	value []byte
+}
+
+func NewEntry(key, value []byte) *Entry {
+	return &Entry{
+		key:   key,
+		value: value,
+	}
+}
+
+func (e *Entry) getKeyLength() uint16 {
+	return uint16(len(e.key))
+}
+
+func (e *Entry) getValueLength() uint16 {
+	return uint16(len(e.value))
+}
+
+func (e Entry) Marshal() []byte {
+	keySize := e.getKeyLength()
+	valueSize := e.getValueLength()
+	result := make([]byte, int64(keySize+valueSize)+FOOTER_SIZE)
+
+	ret := result
+
+	copy(ret, e.key)
+	ret = ret[keySize:]
+
+	copy(ret, e.value)
+	ret = ret[valueSize:]
+
+	copy(ret, Uint16ToBytes(keySize))
+	ret = ret[2:]
+
+	copy(ret, Uint16ToBytes(valueSize))
+
+	return result
 }
 
 func readInt16(reader io.ReaderAt, offset int64) int16 {
