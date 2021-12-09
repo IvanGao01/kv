@@ -6,9 +6,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:  "tool",
-	Long: "tool set <key value> | get <key>",
+var Cmd = &cobra.Command{
+	Use:  "set key value | get key",
+	Long: "set key value | get key",
 	CompletionOptions: cobra.CompletionOptions{
 		DisableDefaultCmd:   true,
 		DisableDescriptions: true,
@@ -17,7 +17,7 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() error {
-	rootCmd.AddCommand(set.Cmd)
-	rootCmd.AddCommand(get.Cmd)
-	return rootCmd.Execute()
+	Cmd.AddCommand(set.Cmd)
+	Cmd.AddCommand(get.Cmd)
+	return Cmd.Execute()
 }
